@@ -44,4 +44,38 @@ class AuthController extends Controller
             'message' => 'Успешная регистрация',
         ]);
     }
+
+    /**
+     * @throws ValidationException
+     */
+    public function login(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|string|email|max:255',
+            'password' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors(),
+            ]);
+        }
+
+        $validated = $validator->validated();
+
+        $user = User::query()->where('email', $validated['email'])->first();
+
+        if (!$user || !Hash::check($validated['password'], $user->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Неверный логин или пароль',
+            ], 401);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Успешная авторизация',
+        ]);
+    }
 }
